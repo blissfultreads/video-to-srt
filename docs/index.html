@@ -44,6 +44,17 @@
         .file-info.show { display: block; }
         .file-name { font-weight: 600; margin-bottom: 4px; word-break: break-all; }
         .file-size { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
+        .lang-select {
+            display: none; margin-top: 20px;
+            background: rgba(255,255,255,0.06); border-radius: 12px; padding: 16px 20px;
+        }
+        .lang-select.show { display: flex; align-items: center; justify-content: space-between; }
+        .lang-select label { font-size: 0.9rem; color: rgba(255,255,255,0.7); }
+        .lang-select select {
+            background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; cursor: pointer;
+        }
+        .lang-select select option { background: #1a1a2e; color: #fff; }
         .btn {
             display: block; width: 100%; padding: 16px;
             border: none; border-radius: 12px; font-size: 1rem;
@@ -107,6 +118,15 @@
         <div class="file-size" id="fileSize"></div>
     </div>
 
+    <div class="lang-select" id="langSelect">
+        <label>언어 선택</label>
+        <select id="langOption">
+            <option value="korean">한국어</option>
+            <option value="english">English</option>
+            <option value="auto">자동 감지</option>
+        </select>
+    </div>
+
     <button class="btn btn-generate" id="btnGenerate" disabled>SRT 자막 생성</button>
 
     <div class="progress-area" id="progressArea">
@@ -140,6 +160,9 @@
     const progressText = document.getElementById('progressText');
     const errorMsg = document.getElementById('errorMsg');
     const successMsg = document.getElementById('successMsg');
+
+    const langSelect = document.getElementById('langSelect');
+    const langOption = document.getElementById('langOption');
 
     let selectedFile = null;
     let transcriber = null;
@@ -205,6 +228,7 @@
         fileName.textContent = file.name;
         fileSize.textContent = formatSize(file.size);
         fileInfo.classList.add('show');
+        langSelect.classList.add('show');
         btnGenerate.disabled = false;
         errorMsg.classList.remove('show');
         successMsg.classList.remove('show');
@@ -246,13 +270,17 @@
 
             // 3. 음성 인식
             setProgress(50, '<span class="spinner">⏳</span> 음성 인식 처리 중... (시간이 걸릴 수 있습니다)');
-            const result = await transcriber(audioData, {
-                language: null,
+            const lang = langOption.value;
+            const opts = {
                 task: 'transcribe',
                 return_timestamps: true,
                 chunk_length_s: 30,
                 stride_length_s: 5,
-            });
+            };
+            if (lang !== 'auto') {
+                opts.language = lang;
+            }
+            const result = await transcriber(audioData, opts);
 
             setProgress(90, '<span class="spinner">⏳</span> SRT 파일 생성 중...');
 
