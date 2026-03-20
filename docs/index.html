@@ -121,8 +121,8 @@
     <div class="lang-select" id="langSelect">
         <label>언어 선택</label>
         <select id="langOption">
-            <option value="korean">한국어</option>
-            <option value="english">English</option>
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
             <option value="auto">자동 감지</option>
         </select>
     </div>
@@ -264,6 +264,7 @@
                     {
                         dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' },
                         device: 'wasm',
+                        revision: 'main',
                     }
                 );
             }
@@ -279,6 +280,7 @@
             };
             if (lang !== 'auto') {
                 opts.language = lang;
+                opts.forced_decoder_ids = null;
             }
             const result = await transcriber(audioData, opts);
 
