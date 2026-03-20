@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video to SRT</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0c29;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 560px;
+            width: 100%;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 40px;
+            font-size: 0.95rem;
+        }
+        .drop-zone {
+            border: 2px dashed rgba(255,255,255,0.25);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.03);
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #a6e3a1;
+            background: rgba(166,227,161,0.05);
+        }
+        .drop-zone .icon { font-size: 3rem; margin-bottom: 16px; }
+        .drop-zone p { color: rgba(255,255,255,0.6); font-size: 0.95rem; }
+        .drop-zone .formats {
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.35);
+        }
+        input[type="file"] { display: none; }
+
+        .file-info {
+            display: none;
+            background: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .file-info.show { display: block; }
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+        .file-size { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .btn-generate {
+            background: #a6e3a1;
+            color: #0f0c29;
+        }
+        .btn-generate:hover { background: #94d990; }
+        .btn-generate:disabled {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.3);
+            cursor: not-allowed;
+        }
+
+        .progress-area {
+            display: none;
+            margin-top: 20px;
+        }
+        .progress-area.show { display: block; }
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #a6e3a1;
+            border-radius: 8px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .progress-text .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-msg {
+            display: none;
+            background: rgba(243,139,139,0.15);
+            border: 1px solid rgba(243,139,139,0.3);
+            color: #f38b8b;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .error-msg.show { display: block; }
+
+        .success-msg {
+            display: none;
+            background: rgba(166,227,161,0.1);
+            border: 1px solid rgba(166,227,161,0.25);
+            color: #a6e3a1;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .success-msg.show { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Video to SRT</h1>
+    <p class="subtitle">비디오를 업로드하면 자막을 자동으로 생성합니다</p>
+
+    <div class="drop-zone" id="dropZone">
+        <div class="icon">🎬</div>
+        <p>비디오 파일을 드래그하거나 클릭하여 선택하세요</p>
+        <div class="formats">MP4 · MOV · AVI · MKV · M4V</div>
+    </div>
+    <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.m4v">
+
+    <div class="file-info" id="fileInfo">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
+    </div>
+
+    <button class="btn btn-generate" id="btnGenerate" disabled>SRT 자막 생성</button>
+
+    <div class="progress-area" id="progressArea">
+        <div class="progress-bar-bg">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">
+            <span class="spinner">⏳</span> Whisper 모델 로딩 중...
+        </div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const progressArea = document.getElementById('progressArea');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
+
+    let selectedFile = null;
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function selectFile(file) {
+        if (!file) return;
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        const allowed = ['.mp4', '.mov', '.avi', '.mkv', '.m4v'];
+        if (!allowed.includes(ext)) {
+            showError('지원하지 않는 파일 형식입니다: ' + ext);
+            return;
+        }
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = formatSize(file.size);
+        fileInfo.classList.add('show');
+        btnGenerate.disabled = false;
+        errorMsg.classList.remove('show');
+        successMsg.classList.remove('show');
+    }
+
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.add('show');
+        successMsg.classList.remove('show');
+    }
+
+    // 드래그 & 드롭
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => selectFile(e.target.files[0]));
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        selectFile(e.dataTransfer.files[0]);
+    });
+
+    // 생성 버튼
+    btnGenerate.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        btnGenerate.disabled = true;
+        progressArea.classList.add('show');
+        errorMsg.classList.remove('show');
+        successMsg.classList.remove('show');
+        progressBar.style.width = '0%';
+
+        // 단계별 진행 시뮬레이션
+        const steps = [
+            { pct: 10, text: '⏳ 파일 업로드 중...' },
+            { pct: 30, text: '⏳ Whisper 모델 준비 중...' },
+            { pct: 50, text: '⏳ 음성 인식 처리 중... (시간이 걸릴 수 있습니다)' },
+        ];
+        let stepIdx = 0;
+        const interval = setInterval(() => {
+            if (stepIdx < steps.length) {
+                progressBar.style.width = steps[stepIdx].pct + '%';
+                progressText.innerHTML = '<span class="spinner">⏳</span> ' + steps[stepIdx].text.replace('⏳ ', '');
+                stepIdx++;
+            }
+        }, 2000);
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const baseUrl = window.location.origin;
+            if (baseUrl.startsWith('file://') || !baseUrl.startsWith('http')) {
+                throw new Error('Flask 서버를 통해 접속해야 합니다. 터미널에서 python3 app.py 실행 후 http://localhost:5050 으로 접속하세요.');
+            }
+
+            const response = await fetch(baseUrl + '/transcribe', {
+                method: 'POST',
+                body: formData,
+            });
+
+            clearInterval(interval);
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || '서버 오류가 발생했습니다.');
+            }
+
+            progressBar.style.width = '100%';
+            progressText.innerHTML = '완료!';
+
+            // 파일 다운로드
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile.name.replace(/\.[^.]+$/, '.srt');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            successMsg.textContent = '✓ SRT 파일이 다운로드되었습니다!';
+            successMsg.classList.add('show');
+
+        } catch (err) {
+            clearInterval(interval);
+            progressArea.classList.remove('show');
+            showError(err.message);
+        }
+
+        btnGenerate.disabled = false;
+    });
+</script>
+
+</body>
+</html>

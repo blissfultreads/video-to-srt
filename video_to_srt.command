@@ -1,10 +1,11 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 echo "================================"
-echo "  비디오 → SRT 자막 생성기"
+echo "  Video to SRT 웹 서버 시작"
 echo "================================"
 echo ""
-python3 video_to_srt.py .
+echo "브라우저에서 http://localhost:5050 으로 접속하세요"
+echo "종료하려면 Ctrl+C 를 누르세요"
 echo ""
-echo "완료! 아무 키나 누르면 종료됩니다."
-read -n 1 -s
+open http://localhost:5050
+python3 app.py
