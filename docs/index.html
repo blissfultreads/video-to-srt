@@ -3,278 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video to SRT — 비디오 자막 자동 생성기</title>
+    <title>Video to SRT</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #1a1a2e;
-            background: #f8f9fa;
-            line-height: 1.7;
-        }
-        .hero {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: #0f0c29;
             color: #fff;
-            padding: 80px 20px;
-            text-align: center;
-        }
-        .hero h1 {
-            font-size: 2.8rem;
-            margin-bottom: 16px;
-            letter-spacing: -0.5px;
-        }
-        .hero p {
-            font-size: 1.2rem;
-            opacity: 0.85;
-            max-width: 600px;
-            margin: 0 auto 32px;
-        }
-        .badge {
-            display: inline-block;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 20px;
-            padding: 6px 16px;
-            font-size: 0.85rem;
-            margin: 4px;
-        }
-        .container {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-        h2 {
-            font-size: 1.6rem;
-            margin-bottom: 24px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #302b63;
-            display: inline-block;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 60px;
-        }
-        .feature-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 28px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            transition: transform 0.2s;
-        }
-        .feature-card:hover { transform: translateY(-4px); }
-        .feature-card .icon { font-size: 2rem; margin-bottom: 12px; }
-        .feature-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
-        .feature-card p { font-size: 0.9rem; color: #555; }
-        .code-block {
-            background: #1e1e2e;
-            color: #cdd6f4;
-            border-radius: 10px;
-            padding: 24px;
-            margin: 16px 0 40px;
-            overflow-x: auto;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-size: 0.9rem;
-            line-height: 1.8;
-        }
-        .code-block .comment { color: #6c7086; }
-        .code-block .cmd { color: #a6e3a1; }
-        .step-list {
-            list-style: none;
-            margin: 20px 0 40px;
-        }
-        .step-list li {
+            min-height: 100vh;
             display: flex;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-        .step-num {
-            background: #302b63;
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            margin-right: 16px;
-            flex-shrink: 0;
         }
-        .step-text { padding-top: 4px; }
-        .step-text strong { display: block; margin-bottom: 2px; }
-        .step-text span { font-size: 0.9rem; color: #555; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0 40px;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        .container { max-width: 560px; width: 100%; padding: 20px; }
+        h1 { font-size: 2.2rem; text-align: center; margin-bottom: 8px; }
+        .subtitle {
+            text-align: center; color: rgba(255,255,255,0.6);
+            margin-bottom: 40px; font-size: 0.95rem;
         }
-        th, td { padding: 14px 18px; text-align: left; }
-        th { background: #302b63; color: #fff; font-weight: 600; }
-        tr:nth-child(even) { background: #f8f9fa; }
-        td code {
-            background: #eee;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
+        .drop-zone {
+            border: 2px dashed rgba(255,255,255,0.25);
+            border-radius: 16px; padding: 60px 20px;
+            text-align: center; cursor: pointer;
+            transition: all 0.3s; background: rgba(255,255,255,0.03);
         }
-        .footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: #888;
-            font-size: 0.85rem;
-            border-top: 1px solid #e5e5e5;
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #a6e3a1; background: rgba(166,227,161,0.05);
         }
+        .drop-zone .icon { font-size: 3rem; margin-bottom: 16px; }
+        .drop-zone p { color: rgba(255,255,255,0.6); font-size: 0.95rem; }
+        .drop-zone .formats {
+            margin-top: 12px; font-size: 0.8rem; color: rgba(255,255,255,0.35);
+        }
+        input[type="file"] { display: none; }
+        .file-info {
+            display: none; background: rgba(255,255,255,0.06);
+            border-radius: 12px; padding: 20px; margin-top: 20px;
+        }
+        .file-info.show { display: block; }
+        .file-name { font-weight: 600; margin-bottom: 4px; word-break: break-all; }
+        .file-size { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
         .btn {
-            display: inline-block;
-            background: #a6e3a1;
-            color: #1a1a2e;
-            padding: 12px 28px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-top: 20px;
-            transition: background 0.2s;
+            display: block; width: 100%; padding: 16px;
+            border: none; border-radius: 12px; font-size: 1rem;
+            font-weight: 600; cursor: pointer; margin-top: 20px; transition: all 0.2s;
         }
-        .btn:hover { background: #94d990; }
+        .btn-generate { background: #a6e3a1; color: #0f0c29; }
+        .btn-generate:hover { background: #94d990; }
+        .btn-generate:disabled {
+            background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: not-allowed;
+        }
+        .progress-area { display: none; margin-top: 24px; }
+        .progress-area.show { display: block; }
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%; background: #a6e3a1; border-radius: 8px;
+            width: 0%; transition: width 0.5s;
+        }
+        .progress-text {
+            margin-top: 12px; text-align: center; font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { display: inline-block; animation: spin 1s linear infinite; }
+        .msg {
+            display: none; border-radius: 10px; padding: 14px 18px;
+            margin-top: 20px; font-size: 0.9rem;
+        }
+        .msg.show { display: block; }
+        .msg.error {
+            background: rgba(243,139,139,0.15); border: 1px solid rgba(243,139,139,0.3); color: #f38b8b;
+        }
+        .msg.success {
+            background: rgba(166,227,161,0.1); border: 1px solid rgba(166,227,161,0.25);
+            color: #a6e3a1; text-align: center;
+        }
+        .notice {
+            margin-top: 40px; padding: 16px; border-radius: 10px;
+            background: rgba(255,255,255,0.04); font-size: 0.8rem;
+            color: rgba(255,255,255,0.4); line-height: 1.6;
+        }
+        .notice strong { color: rgba(255,255,255,0.6); }
     </style>
 </head>
 <body>
 
-<section class="hero">
-    <h1>Video to SRT</h1>
-    <p>폴더에 비디오를 넣고 클릭 한 번이면 자막 완성. OpenAI Whisper 기반 자동 SRT 생성기.</p>
-    <div>
-        <span class="badge">Python</span>
-        <span class="badge">Whisper</span>
-        <span class="badge">ffmpeg</span>
-        <span class="badge">hunspell</span>
-    </div>
-    <br>
-    <a class="btn" href="https://github.com/blissfultreads/video-to-srt">GitHub Repository</a>
-</section>
-
 <div class="container">
+    <h1>Video to SRT</h1>
+    <p class="subtitle">브라우저에서 바로 자막을 생성합니다 — 서버 업로드 없음</p>
 
-    <h2>주요 기능</h2>
-    <div class="features">
-        <div class="feature-card">
-            <div class="icon">🎬</div>
-            <h3>폴더 일괄 처리</h3>
-            <p>폴더 안의 모든 비디오 파일을 자동으로 탐색하고 하위 폴더까지 재귀 처리합니다.</p>
-        </div>
-        <div class="feature-card">
-            <div class="icon">🌏</div>
-            <h3>한국어 + 영어</h3>
-            <p>Whisper의 다국어 인식으로 한영 혼합 음성도 자동 감지하여 자막을 생성합니다.</p>
-        </div>
-        <div class="feature-card">
-            <div class="icon">✅</div>
-            <h3>맞춤법 검사</h3>
-            <p>hunspell 기반 맞춤법 자동 교정으로 더 정확한 자막을 만들어 줍니다.</p>
-        </div>
-        <div class="feature-card">
-            <div class="icon">🔤</div>
-            <h3>영한 병행 표기</h3>
-            <p>한국어 문장 속 영어 표현을 자동으로 감지하여 병행 표기합니다.</p>
-        </div>
-        <div class="feature-card">
-            <div class="icon">⏭️</div>
-            <h3>중복 방지</h3>
-            <p>이미 SRT 파일이 있는 비디오는 건너뛰어 재실행해도 안전합니다.</p>
-        </div>
-        <div class="feature-card">
-            <div class="icon">🖱️</div>
-            <h3>원클릭 실행</h3>
-            <p>.command 파일을 더블클릭하면 터미널 없이 바로 실행됩니다.</p>
-        </div>
+    <div class="drop-zone" id="dropZone">
+        <div class="icon">🎬</div>
+        <p>비디오 파일을 드래그하거나 클릭하여 선택하세요</p>
+        <div class="formats">MP4 · MOV · AVI · MKV · M4V</div>
+    </div>
+    <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.m4v,video/*">
+
+    <div class="file-info" id="fileInfo">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
     </div>
 
-    <h2>설치 방법</h2>
-    <ol class="step-list">
-        <li>
-            <div class="step-num">1</div>
-            <div class="step-text">
-                <strong>필수 도구 설치</strong>
-                <span>Python 3.10+, ffmpeg, Whisper, hunspell이 필요합니다.</span>
-            </div>
-        </li>
-        <li>
-            <div class="step-num">2</div>
-            <div class="step-text">
-                <strong>의존성 설치</strong>
-                <span>아래 명령어를 터미널에 입력하세요.</span>
-            </div>
-        </li>
-    </ol>
-    <div class="code-block">
-<span class="comment"># ffmpeg 설치</span>
-<span class="cmd">brew install ffmpeg</span>
+    <button class="btn btn-generate" id="btnGenerate" disabled>SRT 자막 생성</button>
 
-<span class="comment"># hunspell 및 한국어 사전 설치</span>
-<span class="cmd">brew install hunspell</span>
-<span class="cmd">mkdir -p ~/Library/Spelling</span>
-<span class="cmd">cd ~/Library/Spelling</span>
-<span class="cmd">curl -LO https://cgit.freedesktop.org/libreoffice/dictionaries/plain/ko_KR/ko_KR.aff</span>
-<span class="cmd">curl -LO https://cgit.freedesktop.org/libreoffice/dictionaries/plain/ko_KR/ko_KR.dic</span>
-<span class="cmd">curl -LO https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.aff</span>
-<span class="cmd">curl -LO https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.dic</span>
-
-<span class="comment"># Whisper 설치</span>
-<span class="cmd">pip install openai-whisper</span>
+    <div class="progress-area" id="progressArea">
+        <div class="progress-bar-bg">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
     </div>
 
-    <h2>사용 방법</h2>
-    <div class="code-block">
-<span class="comment"># 폴더 지정 실행</span>
-<span class="cmd">python3 video_to_srt.py /path/to/videos</span>
+    <div class="msg error" id="errorMsg"></div>
+    <div class="msg success" id="successMsg"></div>
 
-<span class="comment"># 현재 폴더 실행</span>
-<span class="cmd">python3 video_to_srt.py .</span>
-
-<span class="comment"># 원클릭 실행 (Finder에서 더블클릭)</span>
-<span class="cmd">video_to_srt.command</span>
+    <div class="notice">
+        <strong>안내</strong><br>
+        최초 실행 시 Whisper 모델(~150MB)을 다운로드합니다 (이후 캐시됨).<br>
+        모든 처리는 브라우저에서 수행되며, 파일이 서버로 전송되지 않습니다.
     </div>
-
-    <h2>옵션</h2>
-    <table>
-        <thead>
-            <tr><th>옵션</th><th>설명</th><th>기본값</th></tr>
-        </thead>
-        <tbody>
-            <tr><td><code>folder</code></td><td>비디오 폴더 경로</td><td><code>.</code> (현재 폴더)</td></tr>
-            <tr><td><code>--model</code></td><td>Whisper 모델 (tiny/base/small/medium/large-v3)</td><td><code>medium</code></td></tr>
-            <tr><td><code>--device</code></td><td>디바이스 (cpu/cuda/mps)</td><td><code>cpu</code></td></tr>
-            <tr><td><code>--no-spellcheck</code></td><td>맞춤법 검사 건너뛰기</td><td>검사 수행</td></tr>
-        </tbody>
-    </table>
-
-    <h2>지원 형식</h2>
-    <table>
-        <thead>
-            <tr><th>확장자</th><th>형식</th></tr>
-        </thead>
-        <tbody>
-            <tr><td><code>.mp4</code></td><td>MPEG-4</td></tr>
-            <tr><td><code>.mov</code></td><td>QuickTime</td></tr>
-            <tr><td><code>.avi</code></td><td>AVI</td></tr>
-            <tr><td><code>.mkv</code></td><td>Matroska</td></tr>
-            <tr><td><code>.m4v</code></td><td>iTunes Video</td></tr>
-        </tbody>
-    </table>
-
 </div>
 
-<div class="footer">
-    Video to SRT &mdash; OpenAI Whisper 기반 비디오 자막 자동 생성기
-</div>
+<script type="module">
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const progressArea = document.getElementById('progressArea');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
+
+    let selectedFile = null;
+    let transcriber = null;
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function formatTimestamp(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const ms = Math.round((seconds - Math.floor(seconds)) * 1000);
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+    }
+
+    function chunksToSrt(chunks) {
+        return chunks.map((chunk, i) => {
+            const start = formatTimestamp(chunk.timestamp[0]);
+            const end = formatTimestamp(chunk.timestamp[1]);
+            const text = chunk.text.trim();
+            return `${i + 1}\n${start} --> ${end}\n${text}\n`;
+        }).join('\n');
+    }
+
+    function setProgress(pct, text) {
+        progressBar.style.width = pct + '%';
+        progressText.innerHTML = text;
+    }
+
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.add('show');
+        successMsg.classList.remove('show');
+    }
+
+    function extractAudio(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                    const arrayBuffer = reader.result;
+                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    const float32 = audioBuffer.getChannelData(0);
+                    audioCtx.close();
+                    resolve(float32);
+                } catch (e) {
+                    reject(new Error('오디오 디코딩 실패: ' + e.message));
+                }
+            };
+            reader.onerror = () => reject(new Error('파일 읽기 실패'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function selectFile(file) {
+        if (!file) return;
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = formatSize(file.size);
+        fileInfo.classList.add('show');
+        btnGenerate.disabled = false;
+        errorMsg.classList.remove('show');
+        successMsg.classList.remove('show');
+        progressArea.classList.remove('show');
+    }
+
+    // 드래그 & 드롭
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => selectFile(e.target.files[0]));
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); selectFile(e.dataTransfer.files[0]); });
+
+    // 생성 버튼
+    btnGenerate.addEventListener('click', async () => {
+        if (!selectedFile) return;
+        btnGenerate.disabled = true;
+        progressArea.classList.add('show');
+        errorMsg.classList.remove('show');
+        successMsg.classList.remove('show');
+
+        try {
+            // 1. 오디오 추출
+            setProgress(10, '<span class="spinner">⏳</span> 오디오 추출 중...');
+            const audioData = await extractAudio(selectedFile);
+
+            // 2. 모델 로드
+            if (!transcriber) {
+                setProgress(20, '<span class="spinner">⏳</span> Whisper 모델 다운로드 중... (최초 1회)');
+                transcriber = await pipeline(
+                    'automatic-speech-recognition',
+                    'onnx-community/whisper-small',
+                    {
+                        dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' },
+                        device: 'wasm',
+                    }
+                );
+            }
+
+            // 3. 음성 인식
+            setProgress(50, '<span class="spinner">⏳</span> 음성 인식 처리 중... (시간이 걸릴 수 있습니다)');
+            const result = await transcriber(audioData, {
+                language: null,
+                task: 'transcribe',
+                return_timestamps: true,
+                chunk_length_s: 30,
+                stride_length_s: 5,
+            });
+
+            setProgress(90, '<span class="spinner">⏳</span> SRT 파일 생성 중...');
+
+            // 4. SRT 변환
+            const chunks = result.chunks || [];
+            if (chunks.length === 0) {
+                throw new Error('음성이 감지되지 않았습니다.');
+            }
+            const srtContent = chunksToSrt(chunks);
+
+            // 5. 다운로드
+            setProgress(100, '완료!');
+            const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile.name.replace(/\.[^.]+$/, '.srt');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            successMsg.textContent = '✓ SRT 파일이 다운로드되었습니다!';
+            successMsg.classList.add('show');
+
+        } catch (err) {
+            progressArea.classList.remove('show');
+            showError(err.message);
+        }
+
+        btnGenerate.disabled = false;
+    });
+</script>
 
 </body>
 </html>
